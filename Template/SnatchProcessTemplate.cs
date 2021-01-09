@@ -80,12 +80,10 @@ namespace gpu_snatcher.Template
                     _logger.LogWarning(ex.ToString());
                     continue;
                 }
-                finally
-                {
-                    await Browser.CloseAsync();
-                    _logger.LogInformation("Closed Browser.");
-                }
             }
+
+            await Browser.CloseAsync();
+            _logger.LogInformation("Closed Browser.");
         }
 
         private static Embed BuildEmbed(EndpointItem item)
