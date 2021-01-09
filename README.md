@@ -9,8 +9,9 @@
 
 ## 🚀 About <a name = "about"></a>
 
-Snipetrain is a community of TF2 Snipers with a goal of gathering the most skilled snipers all around the globe. <br>
-This is the Discord bot Service for the Snipetrain Discord server giving access to Leaderboard & Server data from discord channels. <br>
+Simple PC Part Website scrapper hosted service. <br>
+GPU SNATCHER currently loops over all endpoints and all products in order to find any of the products in stock.
+If it finds any in stock, it will send a discord message over WebHook.
 
 ## ⛏️ Built Using <a name = "built_using"></a>
 
