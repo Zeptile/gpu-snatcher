@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <UserSecretsId>dotnet-gpu_snatcher-3EC3D6EB-2CD2-4295-BF3E-8800940E8BF1</UserSecretsId>
+    <RootNamespace>gpu_snatcher</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Discord.Net.Webhook" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0" />
+    <PackageReference Include="MongoDB.Bson" Version="2.11.5" />
+    <PackageReference Include="MongoDB.Driver" Version="2.11.5" />
+    <PackageReference Include="PuppeteerSharp" Version="2.0.4" />
+  </ItemGroup>
+</Project>
