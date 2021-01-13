@@ -1,7 +1,9 @@
 ﻿using Discord;
 using Discord.Webhook;
+using gpu_snatcher.Helpers;
 using gpu_snatcher.Models;
 using gpu_snatcher.Models.Schemas;
+using gpu_snatcher.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using PuppeteerSharp;
@@ -16,17 +18,23 @@ namespace gpu_snatcher.Template
     public abstract class SnatchProcessTemplate
     {
         private readonly DiscordWebhookClient _webhookClient;
-        private readonly ILogger<Worker> _logger;
+        private readonly ILogger<ScraperWorker> _logger;
         private readonly IConfiguration _config;
+        private readonly IMongoService _mongoService;
+
+        private readonly string RoleId;
 
         protected EndpointSchema Endpoint;
         protected Browser Browser;
 
-        public SnatchProcessTemplate(ILogger<Worker> logger, IConfiguration config)
+        public SnatchProcessTemplate(ILogger<ScraperWorker> logger, IConfiguration config, IMongoService mongoService)
         {
             _logger = logger;
             _config = config;
-            _webhookClient = new DiscordWebhookClient(config.GetSection("Worker")["webhookUri"]);
+            _mongoService = mongoService;
+            _webhookClient = new DiscordWebhookClient(config.GetSection("Workers")["webhookUri"]);
+
+            RoleId = config.GetSection("Workers")["discordRoleId"];
         }
 
         public async Task ExecuteProcessAsync(List<ProductSchema> products, EndpointSchema endpoint)
@@ -34,7 +42,7 @@ namespace gpu_snatcher.Template
             await new BrowserFetcher().DownloadAsync(BrowserFetcher.DefaultRevision);
             Browser = await Puppeteer.LaunchAsync(new LaunchOptions
             {
-                Headless = true,
+                Headless = false,
                 Args = new[] {
                     "--no-sandbox"
                 }
@@ -66,13 +74,39 @@ namespace gpu_snatcher.Template
                         results = await GetQueryResults(product.Title);
                     }
 
+                    var currentInStocks = await _mongoService.GetInStockByEndpoint(Endpoint.Name);
+                    var currentInStockItems = currentInStocks.Select(x => x.EndpointItem).ToList(); // Mapping to a SubList
+
+                    if (results.Count < currentInStockItems.Count)
+                    {
+                        var missingItems = currentInStockItems.Except(results);
+
+                        foreach (var item in missingItems)
+                        {
+                            await _mongoService.DeleteInStock(item.PageUrl);
+                            item.Available = false;
+                            await _webhookClient.SendMessageAsync($"<@&{RoleId}> This item is now out of Stock!", false, DiscordHelpers.BuildEmbed(item));
+                        }
+                    }
+
                     if (results.Count < 1)
                         throw new Exception($"No Results Found for Product ({product.Title}).");
 
                     foreach (var res in results)
                     {
-                        var Embed = new List<Embed>() { BuildEmbed(res) }; // library takes IEnumerable, but discord only takes 1 result
-                        await _webhookClient.SendMessageAsync($"<@&{_config.GetSection("Worker")["discordRoleId"]}>", false, Embed);
+                        var instock = currentInStocks.Find(x => x.URL == res.PageUrl);
+
+                        if (instock == null)
+                        {
+                            await _mongoService.PostInStock(new InStockSchema()
+                            {
+                                URL = res.PageUrl,
+                                EndpointName = Endpoint.Name,
+                                EndpointItem = res
+                            });
+
+                            await _webhookClient.SendMessageAsync($"<@&{RoleId}>", false, DiscordHelpers.BuildEmbed(res));
+                        }
                     }
                 }
                 catch(Exception ex)
@@ -84,23 +118,6 @@ namespace gpu_snatcher.Template
 
             await Browser.CloseAsync();
             _logger.LogInformation("Closed Browser.");
-        }
-
-        private static Embed BuildEmbed(EndpointItem item)
-        {
-            var builder = new EmbedBuilder()
-            {
-                Title = item.Title,
-                ThumbnailUrl = item.ImageUrl,
-                Color = Color.Blue,
-                Timestamp = DateTime.Now
-            };
-
-            builder.AddField("Available", $"{item.Available}");
-            builder.AddField("Price", $"{item.Price}$");
-            builder.AddField("Link", item.PageUrl);
-
-            return builder.Build();
         }
 
         protected abstract Task<List<EndpointItem>> GetQueryResults(string query);

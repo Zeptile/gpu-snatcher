@@ -11,5 +11,9 @@ namespace gpu_snatcher.Services
     {
         Task<List<EndpointSchema>> GetAllEndpoints();
         Task<List<ProductSchema>> GetAllProducts();
+        Task<List<InStockSchema>> GetAllInStocks();
+        Task<List<InStockSchema>> GetInStockByEndpoint(string endpoint);
+        Task PostInStock(InStockSchema item);
+        Task DeleteInStock(string URL);
     }
 }

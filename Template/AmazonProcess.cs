@@ -1,4 +1,5 @@
 ﻿using gpu_snatcher.Models;
+using gpu_snatcher.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
@@ -11,8 +12,8 @@ namespace gpu_snatcher.Template
 {
     public class AmazonProcess : SnatchProcessTemplate
     {
-        private readonly ILogger<Worker> _logger;
-        public AmazonProcess(ILogger<Worker> logger, IConfiguration config) : base (logger, config)
+        private readonly ILogger<ScraperWorker> _logger;
+        public AmazonProcess(ILogger<ScraperWorker> logger, IConfiguration config, IMongoService mongoService) : base (logger, config, mongoService)
         {
             _logger = logger;
         }

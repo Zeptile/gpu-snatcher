@@ -11,14 +11,14 @@ using System.Threading.Tasks;
 
 namespace gpu_snatcher
 {
-    public class Worker : BackgroundService
+    public class ScraperWorker : BackgroundService
     {
-        private readonly ILogger<Worker> _logger;
+        private readonly ILogger<ScraperWorker> _logger;
         private readonly IConfiguration _config;
 
         private readonly IMongoService _mongoService;
 
-        public Worker(ILogger<Worker> logger, IMongoService mongoService, IConfiguration config)
+        public ScraperWorker(ILogger<ScraperWorker> logger, IMongoService mongoService, IConfiguration config)
         {
             _logger = logger;
             _config = config;
@@ -38,7 +38,7 @@ namespace gpu_snatcher
                     Parallel.ForEach(endpoints, async endpoint =>
                     {
                         _logger.LogInformation($"Opening new thread for Endpoint ({endpoint.Name}) <{Thread.CurrentThread.ManagedThreadId}>.");
-                        var process = ProcessFactoryResolver.Resolve(endpoint.Name, _logger, _config);
+                        var process = ProcessFactoryResolver.Resolve(endpoint.Name, _logger, _config, _mongoService);
 
                         if (process == null)
                         {
@@ -56,7 +56,7 @@ namespace gpu_snatcher
                 }
 
                 // 60 Seconds by Default
-                await Task.Delay(int.Parse(_config.GetSection("Worker")["interval"]), stoppingToken);
+                await Task.Delay(int.Parse(_config.GetSection("Workers")["scraperInterval"]), stoppingToken);
             }
         }
     }

@@ -11,7 +11,7 @@ namespace gpu_snatcher.Helpers
         public const string CanadaComputersGetAll =
             @"() => {
                 const selectors = Array.from(document.querySelectorAll('#product-list>.toggleBox'));
-                const availablesStores = ['Online Store', 'Gatineau', 'Ottawa Orleans', 'Downtown Ottawa', 'Ottawa Merivale', 'Kanata'];
+                const availablesStores = ['Online Store', 'Online / Main Warehouse', 'Gatineau', 'Ottawa Orleans', 'Downtown Ottawa', 'Ottawa Merivale', 'Kanata'];
                 return selectors.map(se => {
                     const availabilityEl = se.previousElementSibling;
 
