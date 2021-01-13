@@ -35,18 +35,19 @@ namespace gpu_snatcher
                     var endpoints = await _mongoService.GetAllEndpoints();
                     var products = await _mongoService.GetAllProducts();
 
-                    foreach (var endpoint in endpoints)
+                    Parallel.ForEach(endpoints, async endpoint =>
                     {
+                        _logger.LogInformation($"Opening new thread for Endpoint ({endpoint.Name}) <{Thread.CurrentThread.ManagedThreadId}>.");
                         var process = ProcessFactoryResolver.Resolve(endpoint.Name, _logger, _config);
 
                         if (process == null)
                         {
                             _logger.LogWarning($"No Process is implemented for endpoint ({endpoint.Name}).");
-                            continue;
                         }
-                            
+
                         await process.ExecuteProcessAsync(products, endpoint);
-                    }
+                    });
+
                 }
                 catch (Exception e)
                 {
