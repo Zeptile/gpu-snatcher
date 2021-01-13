@@ -21,7 +21,8 @@ namespace gpu_snatcher
             Host.CreateDefaultBuilder(args)
                 .ConfigureServices((hostContext, services) =>
                 {
-                    services.AddHostedService<Worker>();
+                    services.AddHostedService<ScraperWorker>();
+                    services.AddHostedService<ReminderWorker>();
                     services.AddTransient<IMongoService, MongoService>();
                     services.AddLogging(options =>
                     {
