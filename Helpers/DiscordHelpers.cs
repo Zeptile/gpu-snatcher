@@ -7,7 +7,7 @@ namespace gpu_snatcher.Helpers
 {
     public static class DiscordHelpers
     {
-        public static List<Embed> BuildEmbed(EndpointItem item)
+        public static IEnumerable<Embed> BuildEmbed(EndpointItem item)
         {
             var builder = new EmbedBuilder()
             {

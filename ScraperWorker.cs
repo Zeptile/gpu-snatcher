@@ -40,12 +40,14 @@ namespace gpu_snatcher
                         _logger.LogInformation($"Opening new thread for Endpoint ({endpoint.Name}) <{Thread.CurrentThread.ManagedThreadId}>.");
                         var process = ProcessFactoryResolver.Resolve(endpoint.Name, _logger, _config, _mongoService);
 
-                        if (process == null)
+                        if (process != null)
+                        {
+                            await process.ExecuteProcessAsync(products, endpoint);
+                        }
+                        else
                         {
                             _logger.LogWarning($"No Process is implemented for endpoint ({endpoint.Name}).");
                         }
-
-                        await process.ExecuteProcessAsync(products, endpoint);
                     });
 
                 }

@@ -22,19 +22,19 @@ namespace gpu_snatcher.Template
         private readonly IConfiguration _config;
         private readonly IMongoService _mongoService;
 
-        private readonly string RoleId;
+        private readonly string _roleId;
 
         protected EndpointSchema Endpoint;
         protected Browser Browser;
 
-        public SnatchProcessTemplate(ILogger<ScraperWorker> logger, IConfiguration config, IMongoService mongoService)
+        protected SnatchProcessTemplate(ILogger<ScraperWorker> logger, IConfiguration config, IMongoService mongoService)
         {
             _logger = logger;
             _config = config;
             _mongoService = mongoService;
             _webhookClient = new DiscordWebhookClient(config.GetSection("Workers")["webhookUri"]);
 
-            RoleId = config.GetSection("Workers")["discordRoleId"];
+            _roleId = config.GetSection("Workers")["discordRoleId"];
         }
 
         public async Task ExecuteProcessAsync(List<ProductSchema> products, EndpointSchema endpoint)
@@ -42,7 +42,7 @@ namespace gpu_snatcher.Template
             await new BrowserFetcher().DownloadAsync(BrowserFetcher.DefaultRevision);
             Browser = await Puppeteer.LaunchAsync(new LaunchOptions
             {
-                Headless = true,
+                Headless = false,
                 Args = new[] {
                     "--no-sandbox"
                 }
@@ -85,7 +85,7 @@ namespace gpu_snatcher.Template
                         {
                             await _mongoService.DeleteInStock(item.PageUrl);
                             item.Available = false;
-                            await _webhookClient.SendMessageAsync($"<@&{RoleId}> This item is now out of Stock!", false, DiscordHelpers.BuildEmbed(item));
+                            await _webhookClient.SendMessageAsync($"<@&{_roleId}> This item is now out of Stock!", false, DiscordHelpers.BuildEmbed(item));
                         }
                     }
 
@@ -96,23 +96,23 @@ namespace gpu_snatcher.Template
                     {
                         var instock = currentInStocks.Find(x => x.URL == res.PageUrl);
 
-                        if (instock == null)
+                        if (instock != null) continue;
+                        
+                        _logger.LogInformation($"Found new stock for product: \"{product.Title}\" @ {endpoint.Name}.");
+                        
+                        await _mongoService.PostInStock(new InStockSchema()
                         {
-                            await _mongoService.PostInStock(new InStockSchema()
-                            {
-                                URL = res.PageUrl,
-                                EndpointName = Endpoint.Name,
-                                EndpointItem = res
-                            });
+                            URL = res.PageUrl,
+                            EndpointName = Endpoint.Name,
+                            EndpointItem = res
+                        });
 
-                            await _webhookClient.SendMessageAsync($"<@&{RoleId}>", false, DiscordHelpers.BuildEmbed(res));
-                        }
+                        await _webhookClient.SendMessageAsync($"<@&{_roleId}>", false, DiscordHelpers.BuildEmbed(res));
                     }
                 }
                 catch(Exception ex)
                 {
                     _logger.LogWarning(ex.ToString());
-                    continue;
                 }
             }
 

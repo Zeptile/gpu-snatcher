@@ -7,6 +7,7 @@
 *.sln.docstates
 .vscode/
 .vs/
+.idea/
 
 # Build results
 
