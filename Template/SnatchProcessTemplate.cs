@@ -42,7 +42,7 @@ namespace gpu_snatcher.Template
             await new BrowserFetcher().DownloadAsync(BrowserFetcher.DefaultRevision);
             Browser = await Puppeteer.LaunchAsync(new LaunchOptions
             {
-                Headless = false,
+                Headless = true,
                 Args = new[] {
                     "--no-sandbox"
                 }
